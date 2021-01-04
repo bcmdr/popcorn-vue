@@ -8,7 +8,8 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   state: {
     userProfile: {},
-    posts: []
+    posts: [],
+    userResults: []
   },
   mutations: {
     setUserProfile(state, val) {
@@ -16,6 +17,9 @@ const store = new Vuex.Store({
     },
     setPosts(state, val) {
       state.posts = val;
+    },
+    setUserResults(state, val) {
+      state.userResults = val;
     }
   },
   actions: {
@@ -50,8 +54,7 @@ const store = new Vuex.Store({
 
       // create user profile object in userCollections
       await fb.usersCollection.doc(user.uid).set({
-        name: form.name,
-        title: form.title
+        name: form.name
       });
 
       // fetch user profile and set in state
@@ -94,6 +97,49 @@ const store = new Vuex.Store({
       fb.postsCollection.doc(post.id).update({
         likes: post.likesCount + 1
       });
+    },
+    async interestResult({ state, commit }, { result }) {
+      const userId = fb.auth.currentUser.uid;
+      const docId = String(result.id);
+
+      // check if result has been saved
+      const doc = await fb.resultsCollection.doc(docId).get();
+      const data = doc.data();
+
+      if (!doc.exists || !data.interested || data.interested.length === 0) {
+        // create result
+        result.interested = [userId];
+        await fb.resultsCollection.doc(docId).set(result);
+        commit("setUserResults", [...state.userResults, result]);
+        return;
+      }
+
+      if (data.interested.includes(userId)) {
+        // remove userId from interested list
+        fb.resultsCollection.doc(docId).update({
+          interested: result.interested.filter(item => item !== userId)
+        });
+        commit(
+          "setUserResults",
+          state.userResults.filter(item => item.result?.id !== result.id)
+        );
+        return;
+      }
+
+      if (!data.interested.includes(userId)) {
+        fb.resultsCollection.doc(docId).update({
+          // add userId to intersted list
+          interested: [userId]
+        });
+        let newUserResults = [
+          ...state.userResults,
+          {
+            result,
+            interested: [userId]
+          }
+        ];
+        commit("setUserResults", newUserResults);
+      }
     },
     async updateProfile({ dispatch }, user) {
       const userId = fb.auth.currentUser.uid;
