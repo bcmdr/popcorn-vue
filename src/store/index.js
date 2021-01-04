@@ -19,6 +19,7 @@ const store = new Vuex.Store({
       state.posts = val;
     },
     setUserResults(state, val) {
+      console.log(val);
       Vue.set(state, "userResults", val);
     }
   },
@@ -124,13 +125,7 @@ const store = new Vuex.Store({
           // add userId to intersted list
           interested: result.interested
         });
-        let newUserResults = [
-          ...state.userResults,
-          {
-            result,
-            interested: [...result.interested, userId]
-          }
-        ];
+        let newUserResults = [...state.userResults, result];
         commit("setUserResults", newUserResults);
         return;
       }
@@ -142,6 +137,7 @@ const store = new Vuex.Store({
         fb.resultsCollection.doc(docId).update({
           interested: result.interested
         });
+        console.table(state.userResults);
         commit(
           "setUserResults",
           state.userResults.filter(item => item.id !== result.id)

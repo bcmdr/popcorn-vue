@@ -2,11 +2,7 @@
   <div class="result-poster">
     {{ result.title }} {{ result.release_date | getYear }}
     <button @click="interestResult">
-      {{
-        userResults[result.id] && userResults[result.id].interested
-          ? "Interested"
-          : "Not Interested"
-      }}
+      {{ isInterested ? "Interested" : "Not Interested" }}
     </button>
   </div>
 </template>
@@ -16,7 +12,15 @@ import { mapState } from "vuex";
 export default {
   props: ["result"],
   computed: {
-    ...mapState(["userProfile", "userResults"])
+    ...mapState(["userProfile", "userResults"]),
+    isInterested() {
+      let vm = this;
+      return (
+        this.userResults.filter(function(item) {
+          return item.id === vm.result.id;
+        }).length > 0
+      );
+    }
   },
   created() {
     console.log("ResultPreview: ", this.result);
