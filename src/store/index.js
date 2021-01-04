@@ -132,7 +132,6 @@ const store = new Vuex.Store({
 
       if (result.interested.includes(userId)) {
         // remove userId from interested list
-        console.log("contains");
         result.interested = result.interested.filter(item => item !== userId);
         fb.resultsCollection.doc(docId).update({
           interested: result.interested
@@ -143,6 +142,23 @@ const store = new Vuex.Store({
           state.userResults.filter(item => item.id !== result.id)
         );
         return;
+      }
+    },
+    async fetchUserResults({ commit }, user) {
+      let userResults = [];
+      const userResultsQuery = await fb.resultsCollection
+        .where("interested", "array-contains", user.uid)
+        .get();
+      userResultsQuery.forEach(doc => userResults.push(doc.data()));
+
+      console.log("User Results", userResults, user.uid);
+
+      // set user Results in state
+      commit("setUserResults", userResults);
+
+      // change route to dashboard
+      if (router.currentRoute.path === "/login") {
+        router.push("/");
       }
     },
     async updateProfile({ dispatch }, user) {
@@ -178,17 +194,19 @@ const store = new Vuex.Store({
 });
 
 // realtime firebase connection
-fb.postsCollection.orderBy("createdOn", "desc").onSnapshot(snapshot => {
-  let postsArray = [];
+// fb.resultsCollection
+//   .where("interested", "array-contains", fb.auth.currentUser.uid)
+//   .onSnapshot(snapshot => {
+//     let resultsArray = [];
 
-  snapshot.forEach(doc => {
-    let post = doc.data();
-    post.id = doc.id;
+//     snapshot.forEach(doc => {
+//       let result = doc.data();
+//       result.id = doc.id;
 
-    postsArray.push(post);
-  });
+//       resultsArray.push(result);
+//     });
 
-  store.commit("setPosts", postsArray);
-});
+//     store.commit("setUserResults", resultsArray);
+//   });
 
 export default store;

@@ -32,7 +32,6 @@ export default {
   },
   methods: {
     interestResult() {
-      console.log("Prop Result:", this.result);
       this.$store.dispatch("interestResult", { result: this.result });
     }
   }
