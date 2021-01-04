@@ -19,7 +19,7 @@ const store = new Vuex.Store({
       state.posts = val;
     },
     setUserResults(state, val) {
-      state.userResults = val;
+      Vue.set(state, "userResults", val);
     }
   },
   actions: {
@@ -104,9 +104,9 @@ const store = new Vuex.Store({
 
       // check if result has been saved
       const doc = await fb.resultsCollection.doc(docId).get();
-      const data = doc.data();
+      // const data = doc.data();
 
-      if (!doc.exists || !data.interested || data.interested.length === 0) {
+      if (!doc.exists || !result.interested) {
         // create result
         result.interested = [userId];
         await fb.resultsCollection.doc(docId).set(result);
@@ -114,31 +114,39 @@ const store = new Vuex.Store({
         return;
       }
 
-      if (data.interested.includes(userId)) {
-        // remove userId from interested list
-        fb.resultsCollection.doc(docId).update({
-          interested: result.interested.filter(item => item !== userId)
-        });
-        commit(
-          "setUserResults",
-          state.userResults.filter(item => item.result?.id !== result.id)
-        );
-        return;
-      }
+      console.log(result);
 
-      if (!data.interested.includes(userId)) {
+      if (!result.interested.includes(userId)) {
+        console.log('doesn"t include');
+        result.interested = [...result.interested, userId];
+        console.log(result.interested);
         fb.resultsCollection.doc(docId).update({
           // add userId to intersted list
-          interested: [userId]
+          interested: result.interested
         });
         let newUserResults = [
           ...state.userResults,
           {
             result,
-            interested: [userId]
+            interested: [...result.interested, userId]
           }
         ];
         commit("setUserResults", newUserResults);
+        return;
+      }
+
+      if (result.interested.includes(userId)) {
+        // remove userId from interested list
+        console.log("contains");
+        result.interested = result.interested.filter(item => item !== userId);
+        fb.resultsCollection.doc(docId).update({
+          interested: result.interested
+        });
+        commit(
+          "setUserResults",
+          state.userResults.filter(item => item.id !== result.id)
+        );
+        return;
       }
     },
     async updateProfile({ dispatch }, user) {

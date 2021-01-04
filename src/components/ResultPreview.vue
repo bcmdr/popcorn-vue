@@ -1,7 +1,13 @@
 <template>
   <div class="result-poster">
-    {{ this.result.title }} {{ this.result.release_date | getYear }}
-    <button @click="interestResult">Interested</button>
+    {{ result.title }} {{ result.release_date | getYear }}
+    <button @click="interestResult">
+      {{
+        userResults[result.id] && userResults[result.id].interested
+          ? "Interested"
+          : "Not Interested"
+      }}
+    </button>
   </div>
 </template>
 
@@ -10,7 +16,7 @@ import { mapState } from "vuex";
 export default {
   props: ["result"],
   computed: {
-    ...mapState(["userProfile"])
+    ...mapState(["userProfile", "userResults"])
   },
   created() {
     console.log("ResultPreview: ", this.result);
@@ -22,6 +28,7 @@ export default {
   },
   methods: {
     interestResult() {
+      console.log("Prop Result:", this.result);
       this.$store.dispatch("interestResult", { result: this.result });
     }
   }
