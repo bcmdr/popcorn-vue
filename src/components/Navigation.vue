@@ -12,6 +12,9 @@
           <li>
             <router-link to="/settings">Settings</router-link>
           </li>
+          <li>
+            <router-link to="/search">Search</router-link>
+          </li>
           <li><a @click="logout()">logout</a></li>
         </ul>
       </div>
