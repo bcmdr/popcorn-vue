@@ -29,23 +29,16 @@ export default {
   created() {
     this.query = this.$route.query.title;
     this.submitSearch(this.$route.query.title);
-    console.log(this.$tmdbApiKey);
   },
   computed: {
     searchUrl() {
       return `https://api.themoviedb.org/3/search/movie?api_key=${this.$tmdbApiKey}&language=en-US&query=${this.query}&page=${this.page}&include_adult=false`;
     }
   },
-  filters: {
-    formatDate(val) {
-      return val?.split("-")[0];
-    }
-  },
   methods: {
     async submitSearch() {
       if (!this.query) return;
       this.results = (await (await fetch(this.searchUrl)).json()).results;
-      console.log(this.results);
     }
   }
 };

@@ -19,7 +19,6 @@ const store = new Vuex.Store({
       state.posts = val;
     },
     setUserResults(state, val) {
-      console.log(val);
       Vue.set(state, "userResults", val);
     }
   },
@@ -105,44 +104,50 @@ const store = new Vuex.Store({
 
       // check if result has been saved
       const doc = await fb.resultsCollection.doc(docId).get();
-      // const data = doc.data();
 
-      if (!doc.exists || !result.interested) {
+      if (!doc.exists) {
         // create result
-        result.interested = [userId];
-        await fb.resultsCollection.doc(docId).set(result);
+        await fb.resultsCollection.doc(docId).set({
+          ...result,
+          interested: [userId]
+        });
+        commit("setUserResults", [
+          ...state.userResults,
+          {
+            ...result,
+            interested: [userId]
+          }
+        ]);
+        return;
+      }
+
+      if (!result.interested) {
+        await fb.resultsCollection.doc(docId).update({
+          interested: [userId]
+        });
+        commit("setUserResults", [
+          ...state.userResults,
+          { ...result, interested: [userId] }
+        ]);
+        return;
+      }
+
+      if (!result.interested.includes(userId)) {
+        await fb.resultsCollection.doc(docId).update({
+          // add userId to interested list
+          interested: [...result.interested, userId]
+        });
         commit("setUserResults", [...state.userResults, result]);
         return;
       }
-
-      console.log(result);
-
-      if (!result.interested.includes(userId)) {
-        console.log('doesn"t include');
-        result.interested = [...result.interested, userId];
-        console.log(result.interested);
-        fb.resultsCollection.doc(docId).update({
-          // add userId to intersted list
-          interested: result.interested
-        });
-        let newUserResults = [...state.userResults, result];
-        commit("setUserResults", newUserResults);
-        return;
-      }
-
-      if (result.interested.includes(userId)) {
-        // remove userId from interested list
-        result.interested = result.interested.filter(item => item !== userId);
-        fb.resultsCollection.doc(docId).update({
-          interested: result.interested
-        });
-        console.table(state.userResults);
-        commit(
-          "setUserResults",
-          state.userResults.filter(item => item.id !== result.id)
-        );
-        return;
-      }
+      // Interested contains user, remove from list
+      await fb.resultsCollection.doc(docId).update({
+        interested: result.interested.filter(item => item !== userId)
+      });
+      commit(
+        "setUserResults",
+        state.userResults.filter(item => item.id !== result.id)
+      );
     },
     async fetchUserResults({ commit }, user) {
       let userResults = [];
@@ -150,8 +155,6 @@ const store = new Vuex.Store({
         .where("interested", "array-contains", user.uid)
         .get();
       userResultsQuery.forEach(doc => userResults.push(doc.data()));
-
-      console.log("User Results", userResults, user.uid);
 
       // set user Results in state
       commit("setUserResults", userResults);

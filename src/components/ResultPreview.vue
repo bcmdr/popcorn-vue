@@ -2,7 +2,7 @@
   <div class="result-poster">
     {{ result.title }} {{ result.release_date | getYear }}
     <button @click="interestResult">
-      {{ isInterested ? "Interested" : "Not Interested" }}
+      {{ isInterested ? "Not Interested" : "Interested" }}
     </button>
   </div>
 </template>
@@ -13,17 +13,15 @@ export default {
   props: ["result"],
   computed: {
     ...mapState(["userProfile", "userResults"]),
+    userResult() {
+      return this.userResults.find(item => item.id === this.result.id);
+    },
     isInterested() {
       let vm = this;
-      return (
-        this.userResults.filter(function(item) {
-          return item.id === vm.result.id;
-        }).length > 0
-      );
+      return this.userResults.some(function(item) {
+        return item.id === vm.result.id;
+      });
     }
-  },
-  created() {
-    console.log("ResultPreview: ", this.result);
   },
   filters: {
     getYear(val) {
@@ -32,7 +30,10 @@ export default {
   },
   methods: {
     interestResult() {
-      this.$store.dispatch("interestResult", { result: this.result });
+      let newResult = this.userResult || this.result;
+      this.$store.dispatch("interestResult", {
+        result: newResult
+      });
     }
   }
 };
