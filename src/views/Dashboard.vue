@@ -28,25 +28,9 @@
         </div>
       </div>
       <div class="col2">
-        <div v-if="posts.length">
-          <div v-for="post in posts" :key="post.id" class="post">
-            <h5>{{ post.userName }}</h5>
-            <span>{{ post.createdOn | formatDate }}</span>
-            <p>{{ post.content | trimLength }}</p>
-            <ul>
-              <li>
-                <a @click="toggleCommentModal(post)"
-                  >comments {{ post.comments }}</a
-                >
-              </li>
-              <li>
-                <a @click="likePost(post.id, post.likes)"
-                  >likes {{ post.likes }}</a
-                >
-              </li>
-
-              <li><a @click="viewPost(post)">view full post</a></li>
-            </ul>
+        <div v-if="userResults">
+          <div v-for="result in userResults" :key="result.id" class="result">
+            <ResultPreview :result="result"></ResultPreview>
           </div>
         </div>
         <div v-else>
@@ -93,11 +77,13 @@
 import { mapState } from "vuex";
 import moment from "moment";
 import CommentModal from "@/components/CommentModal";
+import ResultPreview from "@/components/ResultPreview";
 import { commentsCollection } from "@/firebase";
 
 export default {
   components: {
-    CommentModal
+    CommentModal,
+    ResultPreview
   },
   data() {
     return {
@@ -112,7 +98,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(["userProfile", "posts"])
+    ...mapState(["userProfile", "userResults"])
   },
   methods: {
     createPost() {
