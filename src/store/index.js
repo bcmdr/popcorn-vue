@@ -9,8 +9,10 @@ const store = new Vuex.Store({
   state: {
     userProfile: {},
     posts: [],
-    userResults: []
+    userResults: [],
+    userStatuses: {}
   },
+  getters: {},
   mutations: {
     setUserProfile(state, val) {
       state.userProfile = val;
@@ -20,6 +22,13 @@ const store = new Vuex.Store({
     },
     setUserResults(state, val) {
       Vue.set(state, "userResults", val);
+    },
+    setUserStatuses(state, val) {
+      console.log("setting", val);
+      Vue.set(state, "userStatuses", val);
+    },
+    updateUserStatus(state, { movieId, statusId, statusValue }) {
+      state.userStatuses[movieId][statusId] = statusValue;
     }
   },
   actions: {
@@ -33,17 +42,38 @@ const store = new Vuex.Store({
       // fetch user profile and set in state
       dispatch("fetchUserProfile", user);
     },
-    async fetchUserProfile({ commit }, user) {
+    async fetchUserProfile({ commit, dispatch }, user) {
       // fetch user profile
       const userProfile = await fb.usersCollection.doc(user.uid).get();
+      const userData = userProfile.data();
+      userData.uid = user.uid;
 
       // set user profile in state
-      commit("setUserProfile", userProfile.data());
+      commit("setUserProfile", userData);
+
+      dispatch("fetchUserStatuses", user.uid);
 
       // change route to dashboard
       if (router.currentRoute.path === "/login") {
         router.push("/");
       }
+    },
+    async fetchUserStatuses({ commit }, user) {
+      const userId = user.uid;
+      const statusesRef = fb.statusesCollection.doc(userId);
+      console.log(userId);
+      const statusesData = await statusesRef.get();
+
+      if (!statusesData.exists) {
+        let userStatuses = {
+          [userId]: {}
+        };
+        console.log("first?");
+        commit("setUserStatuses", userStatuses);
+        return;
+      }
+
+      commit("setUserStatuses", statusesData);
     },
     async signup({ dispatch }, form) {
       // sign user up
@@ -97,6 +127,20 @@ const store = new Vuex.Store({
       fb.postsCollection.doc(post.id).update({
         likes: post.likesCount + 1
       });
+    },
+    async saveStatus({ commit }, { movieId, statusId, statusValue }) {
+      const userId = fb.auth.currentUser.uid;
+      const movieStatusRef = fb.statusesCollection
+        .doc(userId)
+        .collection("movies")
+        .doc(movieId);
+      // const movieStatusDoc = await movieStatusRef.get();
+
+      await movieStatusRef.update({
+        [statusId]: statusValue
+      });
+
+      commit("updateUserStatus", { userId, movieId, statusId, statusValue });
     },
     async interestResult({ state, commit }, { result }) {
       const userId = fb.auth.currentUser.uid;

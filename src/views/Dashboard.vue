@@ -30,7 +30,11 @@
       <div class="col2">
         <div v-if="userResults">
           <div v-for="result in userResults" :key="result.id" class="result">
-            <ResultPreview :result="result"></ResultPreview>
+            <ResultPreview
+              :result="result"
+              :statuses="userStatuses[result]"
+              :userId="userId"
+            ></ResultPreview>
           </div>
         </div>
         <div v-else>
@@ -98,7 +102,10 @@ export default {
     };
   },
   computed: {
-    ...mapState(["userProfile", "userResults"])
+    ...mapState(["userProfile", "userResults", "userStatuses"]),
+    userId() {
+      return this.userProfile.uid;
+    }
   },
   methods: {
     createPost() {

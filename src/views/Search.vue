@@ -6,7 +6,7 @@
     <div class="results">
       <ul>
         <li v-for="result in results" :key="result.id">
-          <ResultPreview :result="result"></ResultPreview>
+          <ResultPreview :result="result" :userId="userId"></ResultPreview>
         </li>
       </ul>
     </div>
@@ -14,6 +14,7 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
 import ResultPreview from "../components/ResultPreview";
 export default {
   components: {
@@ -31,8 +32,12 @@ export default {
     this.submitSearch(this.$route.query.title);
   },
   computed: {
+    ...mapState(["userProfile"]),
     searchUrl() {
       return `https://api.themoviedb.org/3/search/movie?api_key=${this.$tmdbApiKey}&language=en-US&query=${this.query}&page=${this.page}&include_adult=false`;
+    },
+    userId() {
+      return this.userProfile.uid;
     }
   },
   methods: {
