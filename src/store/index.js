@@ -28,6 +28,12 @@ const store = new Vuex.Store({
       Vue.set(state, "userStatuses", val);
     },
     updateUserStatus(state, { movieId, statusId, statusValue }) {
+      if (!state.userStatuses[movieId]) {
+        state.userStatuses[movieId] = {
+          [statusId]: statusValue
+        };
+        return;
+      }
       state.userStatuses[movieId][statusId] = statusValue;
     }
   },
@@ -42,7 +48,7 @@ const store = new Vuex.Store({
       // fetch user profile and set in state
       dispatch("fetchUserProfile", user);
     },
-    async fetchUserProfile({ commit, dispatch }, user) {
+    async fetchUserProfile({ commit }, user) {
       // fetch user profile
       const userProfile = await fb.usersCollection.doc(user.uid).get();
       const userData = userProfile.data();
@@ -51,7 +57,7 @@ const store = new Vuex.Store({
       // set user profile in state
       commit("setUserProfile", userData);
 
-      dispatch("fetchUserStatuses", user.uid);
+      // dispatch("fetchUserStatuses", user.uid);
 
       // change route to dashboard
       if (router.currentRoute.path === "/login") {
@@ -68,7 +74,7 @@ const store = new Vuex.Store({
         let userStatuses = {
           [userId]: {}
         };
-        console.log("first?");
+        console.log("setting again", userStatuses);
         commit("setUserStatuses", userStatuses);
         return;
       }
@@ -133,8 +139,11 @@ const store = new Vuex.Store({
       const movieStatusRef = fb.statusesCollection
         .doc(userId)
         .collection("movies")
-        .doc(movieId);
-      // const movieStatusDoc = await movieStatusRef.get();
+        .doc(String(movieId));
+
+      if (!movieStatusRef.exists) {
+        movieStatusRef.set({ [statusId]: statusValue });
+      }
 
       await movieStatusRef.update({
         [statusId]: statusValue
