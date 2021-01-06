@@ -67,18 +67,12 @@ const store = new Vuex.Store({
     async fetchUserStatuses({ commit }, user) {
       const userId = user.uid;
       const statusesRef = fb.statusesCollection.doc(userId);
-      console.log(userId);
-      const statusesData = await statusesRef.get();
+      const statusesData = await statusesRef.collection("movies").get();
 
       if (!statusesData.exists) {
-        let userStatuses = {
-          [userId]: {}
-        };
-        console.log("setting again", userStatuses);
-        commit("setUserStatuses", userStatuses);
         return;
       }
-
+      console.log(statusesData);
       commit("setUserStatuses", statusesData);
     },
     async signup({ dispatch }, form) {
@@ -135,6 +129,7 @@ const store = new Vuex.Store({
       });
     },
     async saveStatus({ commit }, { movieId, statusId, statusValue }) {
+      console.log(statusValue);
       const userId = fb.auth.currentUser.uid;
       const movieStatusRef = fb.statusesCollection
         .doc(userId)
