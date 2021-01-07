@@ -1,7 +1,7 @@
 <template>
   <div class="result-poster">
     {{ result.title }} {{ result.release_date | getYear }}
-    <button @click="saveStatus('interested', !interested)">
+    <button @click="saveStatus('interested')">
       {{ interested ? "Not Interested" : "Interested" }}
     </button>
   </div>
@@ -10,26 +10,24 @@
 <script>
 import { mapState } from "vuex";
 export default {
-  data() {
-    return {
-      interested: false
-    };
-  },
   props: ["result", "userId"],
   computed: {
     ...mapState(["userProfile", "userResults", "userStatuses"]),
     userResult() {
       return this.userResults.find(item => item.id === this.result.id);
+    },
+    interested() {
+      return this.userStatuses[this.result.id]?.interested;
     }
   },
   created() {
-    console.log(this.userStatuses[this.result.id]);
     if (
       this.userStatuses[this.result.id] &&
       this.userStatuses[this.result.id].interested
     ) {
       this.interested = true;
     }
+    console.log(this.interested);
   },
   filters: {
     getYear(val) {
@@ -37,12 +35,11 @@ export default {
     }
   },
   methods: {
-    saveStatus(statusId, statusValue) {
-      console.log(statusValue);
+    saveStatus(statusId) {
       this.$store.dispatch("saveStatus", {
         movieId: this.result.id,
         statusId,
-        statusValue
+        statusValue: !this[statusId]
       });
     },
     interestResult() {

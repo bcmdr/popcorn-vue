@@ -69,11 +69,24 @@ const store = new Vuex.Store({
       const statusesRef = fb.statusesCollection.doc(userId);
       const statusesData = await statusesRef.collection("movies").get();
 
-      if (!statusesData.exists) {
+      console.log("data", statusesData);
+
+      if (statusesData.empty) {
         return;
       }
       console.log(statusesData);
-      commit("setUserStatuses", statusesData);
+
+      let statusesArray = statusesData.docs.map(doc => {
+        return { [doc.id]: doc.data() };
+      });
+
+      let statuses = {};
+      for (let item of statusesArray) {
+        let key = Object.keys(item)[0];
+        statuses[key] = item[key];
+      }
+      console.log("statuses", statuses);
+      commit("setUserStatuses", statuses);
     },
     async signup({ dispatch }, form) {
       // sign user up
@@ -129,7 +142,6 @@ const store = new Vuex.Store({
       });
     },
     async saveStatus({ commit }, { movieId, statusId, statusValue }) {
-      console.log(statusValue);
       const userId = fb.auth.currentUser.uid;
       const movieStatusRef = fb.statusesCollection
         .doc(userId)
@@ -138,11 +150,11 @@ const store = new Vuex.Store({
 
       if (!movieStatusRef.exists) {
         movieStatusRef.set({ [statusId]: statusValue });
+      } else {
+        await movieStatusRef.update({
+          [statusId]: statusValue
+        });
       }
-
-      await movieStatusRef.update({
-        [statusId]: statusValue
-      });
 
       commit("updateUserStatus", { userId, movieId, statusId, statusValue });
     },
